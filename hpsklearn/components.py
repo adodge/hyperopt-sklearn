@@ -186,6 +186,14 @@ def sklearn_ColumnKMeans(*args, **kwargs):
     return ColumnKMeans(*args, **kwargs)
 
 @scope.define
+def sklearn_SelectKBest(*args, **kwargs):
+    return sklearn.feature_selection.SelectKBest(*args, **kwargs)
+
+@scope.define
+def sklearn_SelectPercentile(*args, **kwargs):
+    return sklearn.feature_selection.SelectPercentile(*args, **kwargs)
+
+@scope.define
 def patience_param(x):
     """
     Mark a hyperparameter as having a simple monotonic increasing
@@ -1777,6 +1785,54 @@ def colkmeans(name,
 
 # XXX: todo GaussianRandomProjection
 # XXX: todo SparseRandomProjection
+
+def selectkbest(name,
+                score_func=None,
+                k=None):
+    
+    def _name(msg):
+        return '%s.%s_%s' % (name, 'selectkbest', msg)
+    
+    rval = scope.sklearn_SelectKBest(
+        score_func=hp.choice(_name('score_func'), [
+            sklearn.feature_selection.f_classif,
+            sklearn.feature_selection.mutual_info_classif,
+            sklearn.feature_selection.chi2,
+            sklearn.feature_selection.f_regression,
+            sklearn.feature_selection.mutual_info_regression,
+        ]) if score_func is None else score_func,
+        k=scope.int( hp.qloguniform(
+            _name('k'),
+            np.log(0.5),
+            np.log(1999.5),
+            q=1
+        )) if k is None else k,
+    )
+    return rval
+
+def selectpercentile(name,
+                     score_func=None,
+                     percentile=None):
+    
+    def _name(msg):
+        return '%s.%s_%s' % (name, 'selectpercentile', msg)
+    
+    rval = scope.sklearn_SelectPercentile(
+        score_func=hp.choice(_name('score_func'), [
+            sklearn.feature_selection.f_classif,
+            sklearn.feature_selection.mutual_info_classif,
+            sklearn.feature_selection.chi2,
+            sklearn.feature_selection.f_regression,
+            sklearn.feature_selection.mutual_info_regression,
+        ]) if score_func is None else score_func,
+        percentile=scope.int(hp.quniform(
+            _name('percentile'),
+            1,
+            100,
+            q=1
+        )) if percentile is None else percentile,
+    )
+    return rval
 
 
 ####################################
